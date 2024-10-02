@@ -1,2 +1,2 @@
 # Sentiment-Analysis
-A code for multi label classification of emotions.
+A code for multi label classification of emotions using various classifiers.
