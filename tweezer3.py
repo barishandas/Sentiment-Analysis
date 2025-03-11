@@ -53,7 +53,7 @@ class OpticalTweezersData:
         return images
     
     def generate_synthetic_data(self, n_frames: int = 100, 
-                               n_particles: int = 5, 
+                               n_particles: int = 10, 
                                frame_size: Tuple[int, int] = (512, 512),
                                noise_level: float = 0.1) -> Tuple[List[np.ndarray], np.ndarray]:
         """Generate synthetic data for testing"""
@@ -71,7 +71,22 @@ class OpticalTweezersData:
         
         # Generate frames
         current_positions = init_positions.copy()
+
+        particles = []
+        start_times = np.random.randint(0, n_frames//2, size=n_particles)
         for frame in range(n_frames):
+
+            new_particles = np.where(start_times == frame)[0]
+            for p in new_particles:
+
+                start_frame = np.random.randint(0, n_frames//2)
+                duration = np.random.randint(10, n_frames - start_frame)  # Minimum 10 frames
+                particles.append({
+                    'id': p,
+                    'position': np.random.rand(2) * np.array([w, h]),
+                    'start_frame': start_frame,
+                    'end_frame': start_frame + duration
+                })
             # Calculate forces (simple harmonic trap)
             force = -trap_stiffness * (current_positions - init_positions)
             
@@ -206,6 +221,11 @@ class ParticleTracker:
                     self.next_id += 1
                 continue
             
+            for track in active_tracks:
+                if np.random.random() < 0.01:  # 1% chance per frame
+                    track['end_frame'] = frame_idx
+                    active_tracks.remove(track)
+                    
             # Calculate distances between current detections and active tracks
             cost_matrix = np.zeros((len(active_tracks), len(centroids)))
             for i, track in enumerate(active_tracks):
@@ -493,7 +513,7 @@ class Visualizer:
         return fig
 
 
-def run_pipeline(data_path=None, n_synthetic_frames=100, n_particles=5):
+def run_pipeline(data_path=None, n_synthetic_frames=100, n_particles=10):
     """Run the complete optical tweezers analysis pipeline"""
     start_time = time.time()
     
@@ -603,4 +623,4 @@ def run_pipeline(data_path=None, n_synthetic_frames=100, n_particles=5):
 
 if __name__ == "__main__":
     # Run the pipeline with synthetic data
-    run_pipeline(n_synthetic_frames=100, n_particles=5)
+    run_pipeline(n_synthetic_frames=100, n_particles=10)
